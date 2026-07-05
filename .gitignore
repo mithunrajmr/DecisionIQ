@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Node
+node_modules/
+
+# Environment
+.env
+.env.*
+
+# Credentials
+backend/credentials/
+*.json
+
+# Build
+dist/
+build/
+
+# OS
+.DS_Store
+Thumbs.db
