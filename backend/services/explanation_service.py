@@ -102,6 +102,11 @@ def _rule_based_fallback(scenario_name: str, inventory: list, priority: int) -> 
 # Service Class
 # ---------------------------------------------------------------------------
 
+import time
+from utils.logging_helper import print_ai_status
+from services.context_service import context_service
+
+
 class ExplanationService:
     """
     Generates a structured Gemini explanation containing four distinct categories
@@ -109,14 +114,38 @@ class ExplanationService:
     """
 
     def explain(self, scenario_name: str, priority: int) -> Dict[str, Any]:
-        inventory = bigquery_service.get_inventory()
+        start_time = time.time()
+        bq_connected = True
+        inventory_rows = 0
 
         try:
-            prompt = build_explanation_prompt(inventory, scenario_name, priority)
-            # Call gemini_service.generate() to parse the JSON output from Gemini
-            raw = gemini_service.generate(prompt)
+            inventory = bigquery_service.get_inventory()
+            inventory_rows = len(inventory)
+        except Exception as exc:
+            logger.error("Failed to fetch BigQuery inventory for explanation: %s", exc)
+            bq_connected = False
+            inventory = []
 
-            # Ensure all required fields exist in the JSON response
+        # Get context info
+        try:
+            ctx = context_service.get_context()
+            weather = f"{ctx['weather']['condition']} ({ctx['weather']['temperature_c']}°C)"
+            event = ctx['event']['event_name'] if ctx['event']['has_event'] else "None"
+        except Exception:
+            weather = "Unknown"
+            event = "None"
+
+        gemini_connected = True
+        source = "Gemini"
+        model = gemini_service.model_name
+        fallback = False
+        exception_reason = None
+
+        try:
+            if not bq_connected:
+                raise RuntimeError("BigQuery connection failed")
+            prompt = build_explanation_prompt(inventory, scenario_name, priority)
+            raw = gemini_service.generate(prompt)
             result = {
                 "why_this_strategy":     str(raw.get("why_this_strategy", "")),
                 "key_inventory_factors": str(raw.get("key_inventory_factors", "")),
@@ -124,12 +153,29 @@ class ExplanationService:
                 "risks":                 str(raw.get("risks", "")),
                 "suggested_actions":     list(raw.get("suggested_actions", [])),
             }
-            logger.info("Serving explanation and suggested actions from Gemini API.")
-            print("[DecisionIQ] Serving explanation and suggested actions from Gemini API.")
         except Exception as exc:
-            logger.warning("Gemini explanation query failed (%s). Serving explanation from fallback.", exc)
-            print(f"[DecisionIQ] Gemini explanation failed ({exc}). Serving explanation from fallback.")
+            gemini_connected = False
+            source = "Rule-Based Fallback"
+            model = "N/A"
+            fallback = True
+            exception_reason = str(exc)
             result = _rule_based_fallback(scenario_name, inventory, priority)
+
+        latency = time.time() - start_time
+
+        print_ai_status(
+            bq_connected=bq_connected,
+            gemini_connected=gemini_connected,
+            source=source,
+            model=model,
+            latency=latency,
+            fallback=fallback,
+            inventory_rows=inventory_rows,
+            weather=weather,
+            event=event,
+            priority=priority,
+            exception_reason=exception_reason
+        )
 
         # Grounding safety checks: ensure actions format matches SuggestedAction schema
         sanitized_actions = []

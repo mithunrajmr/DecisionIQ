@@ -34,8 +34,9 @@ export default function Header() {
 
           {/* Nav */}
           <nav className="flex items-center gap-2">
-            <NavLink to="/"      label="Dashboard" active={pathname === '/'} />
-            <NavLink to="/about" label="About"     active={pathname === '/about'} />
+            <NavLink to="/"          label="Dashboard" active={pathname === '/'} />
+            <NavLink to="/inventory" label="Inventory"  active={pathname === '/inventory'} />
+            <NavLink to="/about"     label="About"      active={pathname === '/about'} />
           </nav>
         </div>
       </div>

@@ -113,6 +113,11 @@ def _rule_based_scenarios(inventory: List[Dict], priority: int) -> List[Dict[str
     return scenarios_raw
 
 
+import time
+from utils.logging_helper import print_ai_status
+from services.context_service import context_service
+
+
 class DecisionService:
     """
     Reads slider value + inventory, builds Gemini prompt,
@@ -120,18 +125,62 @@ class DecisionService:
     """
 
     def generate_scenarios(self, priority: int) -> Dict[str, Any]:
-        inventory = bigquery_service.get_inventory()
+        start_time = time.time()
+        bq_connected = True
+        inventory_rows = 0
 
         try:
+            inventory = bigquery_service.get_inventory()
+            inventory_rows = len(inventory)
+        except Exception as exc:
+            logger.error("Failed to fetch BigQuery inventory: %s", exc)
+            bq_connected = False
+            inventory = []
+
+        # Get context info
+        try:
+            ctx = context_service.get_context()
+            weather = f"{ctx['weather']['condition']} ({ctx['weather']['temperature_c']}°C)"
+            event = ctx['event']['event_name'] if ctx['event']['has_event'] else "None"
+        except Exception:
+            weather = "Unknown"
+            event = "None"
+
+        gemini_connected = True
+        source = "Gemini"
+        model = gemini_service.model_name
+        fallback = False
+        exception_reason = None
+
+        try:
+            if not bq_connected:
+                raise RuntimeError("BigQuery connection failed")
             prompt = build_scenario_prompt(inventory, priority)
             raw = gemini_service.generate(prompt)
             scenarios = validate_scenarios(raw.get("scenarios", raw))
-            logger.info("Serving scenarios from Gemini API.")
-            print("[DecisionIQ] Serving scenarios from Gemini API.")
         except Exception as exc:
-            logger.warning("Gemini unavailable (%s) – using rule-based fallback.", exc)
-            print(f"[DecisionIQ] Gemini scenarios failed ({exc}). Serving from rule-based fallback.")
+            gemini_connected = False
+            source = "Rule-Based Fallback"
+            model = "N/A"
+            fallback = True
+            exception_reason = str(exc)
             scenarios = _rule_based_scenarios(inventory, priority)
+
+        latency = time.time() - start_time
+
+        print_ai_status(
+            bq_connected=bq_connected,
+            gemini_connected=gemini_connected,
+            source=source,
+            model=model,
+            latency=latency,
+            fallback=fallback,
+            inventory_rows=inventory_rows,
+            weather=weather,
+            event=event,
+            priority=priority,
+            exception_reason=exception_reason
+        )
 
         return {
             "scenarios": scenarios,

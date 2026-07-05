@@ -43,7 +43,7 @@ const DEFAULT_CFG = {
   rankText: '#ffffff',
 }
 
-export default function StrategyCard({ scenario, isSelected, onSelect, onConfirm, priority = 50 }) {
+export default function StrategyCard({ scenario, isSelected, onSelect, onConfirm, priority = 50, isConfirmed = false }) {
   if (!scenario) return null
 
   const cfg = CARD_CONFIG[scenario.name] ?? DEFAULT_CFG
@@ -55,7 +55,7 @@ export default function StrategyCard({ scenario, isSelected, onSelect, onConfirm
 
   const handleConfirm = (e) => {
     e.stopPropagation()
-    if (onConfirm) onConfirm(scenario)
+    if (onConfirm && !isConfirmed) onConfirm(scenario)
   }
 
   // Dynamic explanation of ranking compared to other strategies
@@ -232,15 +232,17 @@ export default function StrategyCard({ scenario, isSelected, onSelect, onConfirm
           </button>
 
           {/* Confirm → saves to history */}
+          {/* Confirm → saves to history */}
           {isSelected && (
             <button
-              className="px-4 py-2.5 rounded-xl text-sm font-black border-2 transition-all duration-150"
-              style={{ background: cfg.accentBg, color: cfg.scoreColor, borderColor: cfg.accentBorder,
+              disabled={isConfirmed}
+              className={`px-4 py-2.5 rounded-xl text-sm font-black border-2 transition-all duration-150 ${isConfirmed ? 'cursor-not-allowed opacity-60 bg-stone-100 border-stone-200 shadow-none text-stone-400' : ''}`}
+              style={isConfirmed ? {} : { background: cfg.accentBg, color: cfg.scoreColor, borderColor: cfg.accentBorder,
                        boxShadow: `2px 2px 0 0 ${cfg.accentBorder}` }}
               onClick={handleConfirm}
-              title="Save this decision to history"
+              title={isConfirmed ? "Decision already confirmed" : "Save this decision to history"}
             >
-              Confirm
+              {isConfirmed ? '✓ Confirmed' : 'Confirm'}
             </button>
           )}
         </div>

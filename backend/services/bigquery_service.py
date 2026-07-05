@@ -244,6 +244,97 @@ class BigQueryService:
             print(f"[DecisionIQ] BigQuery query failed ({exc}) – falling back to mock data.")
             return MOCK_INVENTORY
 
+    def add_product(self, item: Dict[str, Any]):
+        """Adds a product to the inventory database."""
+        if self._use_mock:
+            for existing in MOCK_INVENTORY:
+                if existing["product_name"].lower() == item["product_name"].lower():
+                    raise ValueError(f"Product '{item['product_name']}' already exists.")
+            MOCK_INVENTORY.append(item)
+            return
+
+        from google.cloud import bigquery
+        client = self._get_client()
+        query = f"""
+            INSERT INTO `{self.project_id}.{self.dataset}.{self.table}`
+            (product_name, category, avg_weekly_sales_units, current_stock_units, shelf_life_days, unit_cost, unit_price, weather_sensitivity, local_event_flag)
+            VALUES (@product_name, @category, @avg_weekly_sales_units, @current_stock_units, @shelf_life_days, @unit_cost, @unit_price, @weather_sensitivity, @local_event_flag)
+        """
+        job_config = bigquery.QueryJobConfig(
+            query_parameters=[
+                bigquery.ScalarQueryParameter("product_name", "STRING", item["product_name"]),
+                bigquery.ScalarQueryParameter("category", "STRING", item["category"]),
+                bigquery.ScalarQueryParameter("avg_weekly_sales_units", "INTEGER", item["avg_weekly_sales_units"]),
+                bigquery.ScalarQueryParameter("current_stock_units", "INTEGER", item["current_stock_units"]),
+                bigquery.ScalarQueryParameter("shelf_life_days", "INTEGER", item["shelf_life_days"]),
+                bigquery.ScalarQueryParameter("unit_cost", "FLOAT64", item["unit_cost"]),
+                bigquery.ScalarQueryParameter("unit_price", "FLOAT64", item["unit_price"]),
+                bigquery.ScalarQueryParameter("weather_sensitivity", "STRING", item["weather_sensitivity"]),
+                bigquery.ScalarQueryParameter("local_event_flag", "BOOL", item["local_event_flag"]),
+            ]
+        )
+        client.query(query, job_config=job_config).result()
+
+    def update_product(self, product_name: str, item: Dict[str, Any]):
+        """Updates an existing product in the inventory database."""
+        if self._use_mock:
+            for idx, existing in enumerate(MOCK_INVENTORY):
+                if existing["product_name"].lower() == product_name.lower():
+                    MOCK_INVENTORY[idx] = {**item, "product_name": existing["product_name"]}
+                    return
+            raise ValueError(f"Product '{product_name}' not found.")
+
+        from google.cloud import bigquery
+        client = self._get_client()
+        query = f"""
+            UPDATE `{self.project_id}.{self.dataset}.{self.table}`
+            SET category = @category,
+                avg_weekly_sales_units = @avg_weekly_sales_units,
+                current_stock_units = @current_stock_units,
+                shelf_life_days = @shelf_life_days,
+                unit_cost = @unit_cost,
+                unit_price = @unit_price,
+                weather_sensitivity = @weather_sensitivity,
+                local_event_flag = @local_event_flag
+            WHERE product_name = @product_name
+        """
+        job_config = bigquery.QueryJobConfig(
+            query_parameters=[
+                bigquery.ScalarQueryParameter("product_name", "STRING", product_name),
+                bigquery.ScalarQueryParameter("category", "STRING", item["category"]),
+                bigquery.ScalarQueryParameter("avg_weekly_sales_units", "INTEGER", item["avg_weekly_sales_units"]),
+                bigquery.ScalarQueryParameter("current_stock_units", "INTEGER", item["current_stock_units"]),
+                bigquery.ScalarQueryParameter("shelf_life_days", "INTEGER", item["shelf_life_days"]),
+                bigquery.ScalarQueryParameter("unit_cost", "FLOAT64", item["unit_cost"]),
+                bigquery.ScalarQueryParameter("unit_price", "FLOAT64", item["unit_price"]),
+                bigquery.ScalarQueryParameter("weather_sensitivity", "STRING", item["weather_sensitivity"]),
+                bigquery.ScalarQueryParameter("local_event_flag", "BOOL", item["local_event_flag"]),
+            ]
+        )
+        client.query(query, job_config=job_config).result()
+
+    def delete_product(self, product_name: str):
+        """Deletes a product from the inventory database."""
+        if self._use_mock:
+            for idx, existing in enumerate(MOCK_INVENTORY):
+                if existing["product_name"].lower() == product_name.lower():
+                    MOCK_INVENTORY.pop(idx)
+                    return
+            raise ValueError(f"Product '{product_name}' not found.")
+
+        from google.cloud import bigquery
+        client = self._get_client()
+        query = f"""
+            DELETE FROM `{self.project_id}.{self.dataset}.{self.table}`
+            WHERE product_name = @product_name
+        """
+        job_config = bigquery.QueryJobConfig(
+            query_parameters=[
+                bigquery.ScalarQueryParameter("product_name", "STRING", product_name)
+            ]
+        )
+        client.query(query, job_config=job_config).result()
+
 
 # Singleton instance reused across requests
 bigquery_service = BigQueryService()

@@ -44,15 +44,16 @@ class GeminiService:
         """Lazy-init JSON model (application/json mime type)."""
         if self._json_model is None:
             import vertexai
-            from vertexai.generative_models import GenerativeModel, GenerationConfig
+            from vertexai.generative_models import GenerativeModel
             vertexai.init(project=self.project_id, location=self.location)
             self._json_model = GenerativeModel(
                 self.model_name,
-                generation_config=GenerationConfig(
-                    response_mime_type="application/json",
-                    temperature=0.3,
-                    max_output_tokens=8192,
-                ),
+                generation_config={
+                    "response_mime_type": "application/json",
+                    "temperature": 0.3,
+                    "max_output_tokens": 2048,
+                    "thinking_config": {"thinking_budget": 0}
+                },
             )
         return self._json_model
 
@@ -60,14 +61,15 @@ class GeminiService:
         """Lazy-init plain-text model (for explanations)."""
         if self._text_model is None:
             import vertexai
-            from vertexai.generative_models import GenerativeModel, GenerationConfig
+            from vertexai.generative_models import GenerativeModel
             vertexai.init(project=self.project_id, location=self.location)
             self._text_model = GenerativeModel(
                 self.model_name,
-                generation_config=GenerationConfig(
-                    temperature=0.4,
-                    max_output_tokens=2048,
-                ),
+                generation_config={
+                    "temperature": 0.4,
+                    "max_output_tokens": 2048,
+                    "thinking_config": {"thinking_budget": 0}
+                },
             )
         return self._text_model
 
@@ -82,9 +84,13 @@ class GeminiService:
             model  = self._get_json_model()
             raw    = model.generate_content(prompt).text.strip()
             # Strip markdown code fences if present
-            raw    = re.sub(r"^```(?:json)?\s*", "", raw)
-            raw    = re.sub(r"\s*```$",           "", raw)
-            return json.loads(raw)
+            raw_clean = re.sub(r"^```(?:json)?\s*", "", raw)
+            raw_clean = re.sub(r"\s*```$",           "", raw_clean)
+            try:
+                return json.loads(raw_clean)
+            except Exception as loads_exc:
+                logger.error("RAW GEMINI RESPONSE (JSON parsing failed):\n%s\n%s\n%s", "-" * 60, raw, "-" * 60)
+                raise
         except Exception as exc:
             logger.error("Gemini JSON generation failed: %s", exc)
             raise

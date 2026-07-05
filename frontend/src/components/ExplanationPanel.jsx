@@ -5,7 +5,7 @@ import { fetchExplanation } from '../services/explanationApi'
  * ExplanationPanel – expandable panel with Gemini explanation for selected scenario.
  * Displays data-grounded AI recommendations in four clean Neo-Brutalist sections.
  */
-export default function ExplanationPanel({ selectedScenario, priority, onActionsLoaded }) {
+export default function ExplanationPanel({ selectedScenario, priority, onActionsLoaded, inventory }) {
   const [isOpen, setIsOpen]       = useState(false)
   const [analysis, setAnalysis]   = useState(null)
   const [loading, setLoading]     = useState(false)
@@ -24,10 +24,13 @@ export default function ExplanationPanel({ selectedScenario, priority, onActions
     setFetchKey(null)
   }, [selectedScenario])
 
-  // Fetch when panel opens or scenario/priority changes
+  // Fetch when panel opens or scenario/priority changes, or when inventory updates
   useEffect(() => {
     if (!isOpen || !selectedScenario) return
-    const key = `${selectedScenario}-${priority}`
+    
+    // Hash key represents the products configuration and stock levels
+    const itemsHash = (inventory?.items || []).map(i => `${i.product_name}:${i.current_stock_units}:${i.avg_weekly_sales_units}`).join('|')
+    const key = `${selectedScenario}-${priority}-${itemsHash}`
     if (fetchKey === key) return
 
     const load = async () => {
@@ -37,9 +40,9 @@ export default function ExplanationPanel({ selectedScenario, priority, onActions
         const result = await fetchExplanation(selectedScenario, priority)
         setAnalysis(result)
         setFetchKey(key)
-        // Pass actions to parent
+        // Pass actions + full analysis to parent
         if (onActionsLoaded && result.suggested_actions) {
-          onActionsLoaded(result.suggested_actions)
+          onActionsLoaded(result.suggested_actions, result)
         }
       } catch {
         setError('Unable to load explanation. Please try again.')
@@ -48,7 +51,7 @@ export default function ExplanationPanel({ selectedScenario, priority, onActions
       }
     }
     load()
-  }, [isOpen, selectedScenario, priority])  // eslint-disable-line react-hooks/exhaustive-deps
+  }, [isOpen, selectedScenario, priority, inventory])
 
   const toggle = () => setIsOpen(o => !o)
 

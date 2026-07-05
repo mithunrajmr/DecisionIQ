@@ -33,8 +33,9 @@ export default function Footer() {
 
           {/* Nav */}
           <nav className="flex gap-4 text-xs font-bold text-stone-400">
-            <Link to="/"      className="hover:text-ink transition-colors">Dashboard</Link>
-            <Link to="/about" className="hover:text-ink transition-colors">About</Link>
+            <Link to="/"          className="hover:text-ink transition-colors">Dashboard</Link>
+            <Link to="/inventory" className="hover:text-ink transition-colors">Inventory</Link>
+            <Link to="/about"     className="hover:text-ink transition-colors">About</Link>
           </nav>
         </div>
       </div>

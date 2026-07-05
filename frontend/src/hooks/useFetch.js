@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 
 /**
  * Generic data-fetching hook.
@@ -9,6 +9,11 @@ export function useFetch(fetchFn, deps = []) {
   const [data, setData]       = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError]     = useState(null)
+  const [trigger, setTrigger] = useState(0)
+
+  const refetch = useCallback(() => {
+    setTrigger(t => t + 1)
+  }, [])
 
   useEffect(() => {
     let cancelled = false
@@ -30,7 +35,7 @@ export function useFetch(fetchFn, deps = []) {
     run()
     return () => { cancelled = true }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, deps)
+  }, [...deps, trigger])
 
-  return { data, loading, error }
+  return { data, loading, error, refetch }
 }

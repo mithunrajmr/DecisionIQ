@@ -16,6 +16,7 @@ import { useDashboard }     from '../hooks/useDashboard'
 import { useDecisionHistory } from '../hooks/useDecisionHistory'
 import { fetchInventory }   from '../services/inventoryApi'
 import { fetchContext }     from '../services/contextApi'
+import { fetchExplanation } from '../services/explanationApi'
 
 export default function Dashboard() {
   // ── Data fetching ──────────────────────────────────────────────────────────
@@ -36,8 +37,18 @@ export default function Dashboard() {
   // ── Decision History ───────────────────────────────────────────────────────
   const { history, addEntry, clearHistory } = useDecisionHistory()
 
-  // ── Suggested Actions (from explanation endpoint) ──────────────────────────
-  const [suggestedActions, setSuggestedActions] = useState([])
+  // ── Explanation payload storage (for metadata on confirm) ─────────────────
+  const [suggestedActions, setSuggestedActions]   = useState([])
+  const [lastExplanation,  setLastExplanation]    = useState(null)
+
+  // ── Confirm state validation & Toast feedback ──────────────────────────────
+  const [lastConfirmedKey, setLastConfirmedKey] = useState('')
+  const [toast, setToast] = useState(null)
+
+  const showToast = (msg) => {
+    setToast(msg)
+    setTimeout(() => setToast(null), 3000)
+  }
 
   // ── Error dismissal ────────────────────────────────────────────────────────
   const [dismissedErrors, setDismissed] = useState({})
@@ -48,13 +59,49 @@ export default function Dashboard() {
   // Find the currently selected scenario object
   const selectedScenarioObj = scenarios.find(s => s.name === selectedScenario) ?? null
 
-  // Confirm handler — saves to history
-  const handleConfirm = (scenario) => {
+  // Handle explanation loaded — capture for history metadata
+  const handleActionsLoaded = (actions, explanation) => {
+    setSuggestedActions(actions)
+    if (explanation) setLastExplanation(explanation)
+  }
+
+  // Confirm handler — saves expanded metadata to history
+  const handleConfirm = async (scenario) => {
+    const key = `${scenario.name}-${priority}`
+    if (lastConfirmedKey === key) return
+
+    let aiReason = null
+    // If the last loaded explanation matches this scenario, use it
+    if (lastExplanation && lastExplanation.scenarioName === scenario.name) {
+      aiReason = lastExplanation.why_this_strategy
+    } else {
+      // Otherwise, fetch it on the fly
+      try {
+        const res = await fetchExplanation(scenario.name, priority)
+        aiReason = res.why_this_strategy
+      } catch (err) {
+        console.error("Failed to fetch explanation for history:", err)
+      }
+    }
+
+    // Build top 3 products from suggested_order (highest quantity first)
+    const orderEntries = Object.entries(scenario.suggested_order || {})
+    const top3 = orderEntries
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 3)
+      .map(([name, qty]) => ({ name, qty }))
+
     addEntry({
       scenarioName: scenario.name,
       priority,
       score:        scenario.score,
+      weather:      context?.weather ?? null,
+      event:        context?.event ?? null,
+      topProducts:  top3,
+      reason:       aiReason,
     })
+    setLastConfirmedKey(key)
+    showToast(`Confirmed ${scenario.name} strategy at priority ${priority}/100!`)
   }
 
   return (
@@ -132,6 +179,7 @@ export default function Dashboard() {
                   onSelect={handleSelectScenario}
                   onConfirm={handleConfirm}
                   priority={priority}
+                  isConfirmed={lastConfirmedKey === `${scenario.name}-${priority}`}
                 />
               ))}
             </div>
@@ -157,7 +205,8 @@ export default function Dashboard() {
           <ExplanationPanel
             selectedScenario={selectedScenario}
             priority={priority}
-            onActionsLoaded={setSuggestedActions}
+            onActionsLoaded={handleActionsLoaded}
+            inventory={inventory}
           />
         </section>
 
@@ -176,41 +225,20 @@ export default function Dashboard() {
           <DecisionHistory history={history} onClear={clearHistory} />
         </section>
 
-        {/* ── Tech callout ─────────────────────────────────────────────────── */}
-        <section>
-          <div className="card p-5"
-               style={{ background: '#dbeafe', borderColor: '#2563eb',
-                        boxShadow: '3px 3px 0 0 #2563eb' }}>
-            <div className="flex flex-wrap gap-6 justify-between items-center">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg border-2 border-brand-600 bg-white flex items-center justify-center flex-shrink-0"
-                     style={{ boxShadow: '2px 2px 0 0 #2563eb' }}>
-                  <svg className="w-5 h-5 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                  </svg>
-                </div>
-                <div>
-                  <p className="font-black text-ink text-sm">How DecisionIQ works</p>
-                  <p className="text-xs font-medium text-stone-600 mt-0.5">
-                    Slider → BigQuery inventory → Gemini 2.5 Flash → 3 ranked strategies → AI explanation
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 flex-wrap">
-                {['BigQuery', 'Vertex AI', 'Gemini 2.5 Flash', 'Cloud Run'].map(tech => (
-                  <span key={tech}
-                        className="px-2.5 py-1 rounded-lg text-xs font-black border-2 border-brand-600 bg-white text-brand-700"
-                        style={{ boxShadow: '2px 2px 0 0 #2563eb' }}>
-                    {tech}
-                  </span>
-                ))}
-              </div>
-            </div>
-          </div>
-        </section>
       </main>
 
       <Footer />
+
+      {/* Success Toast */}
+      {toast && (
+        <div className="fixed bottom-5 right-5 z-50 p-4 border-2 border-ink bg-amber-300 text-ink font-black text-sm rounded-xl"
+             style={{ boxShadow: '4px 4px 0 0 #0a0a0a', animation: 'slide-up 0.2s ease-out' }}>
+          <div className="flex items-center gap-2">
+            <span>✅</span>
+            <span>{toast}</span>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
