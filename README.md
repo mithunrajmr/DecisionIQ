@@ -1,77 +1,147 @@
-# DecisionIQ — AI Decision Intelligence for Inventory Planning
+# DecisionIQ — AI-Powered Grocery Inventory Decision Simulator
 
-> **Google Gen AI Academy APAC Hackathon · Cohort 2**
->
-> Developer: **Mithun Raj M R** (Software Engineer, Wipro)
+<div align="center">
+  <p><strong>Google Gen AI Academy APAC Hackathon · Cohort 2</strong></p>
 
-DecisionIQ is an AI-powered **Decision Intelligence platform** designed to help small-to-medium grocery store owners simulate purchasing strategies, analyze cost-benefit trade-offs, and make data-driven inventory orders before committing capital.
+  <p>
+    <a href="https://decisioniq-501506-f6f79.web.app/"><img src="https://img.shields.io/badge/Live_Demo-🚀-blue?style=for-the-badge&logo=google-chrome&logoColor=white" alt="Live Demo" /></a>
+    <a href="https://drive.google.com/file/d/1kRNAHsK79xIWZq0i7rKvLyBcIMsznQRL/view?usp=drive_link"><img src="https://img.shields.io/badge/Demo_Video-📺-red?style=for-the-badge&logo=youtube&logoColor=white" alt="Demo Video" /></a>
+    <a href="DecisionIQ_Final_Submission.pptx"><img src="https://img.shields.io/badge/Presentation-📊-orange?style=for-the-badge&logo=google-slides&logoColor=white" alt="Presentation" /></a>
+    <a href="https://github.com/mithunrajmr/DecisionIQ"><img src="https://img.shields.io/badge/GitHub_Repo-📦-black?style=for-the-badge&logo=github&logoColor=white" alt="GitHub Repository" /></a>
+  </p>
 
-Unlike typical chatbots or descriptive dashboards, DecisionIQ functions as an interactive **decision simulator**. It leverages **Vertex AI Gemini** and live **Google BigQuery** data to evaluate risks (spoilage, stockouts, waste value) under varying weather conditions and local event foot traffic.
-
----
-
-## 🎨 Modern Neo-Brutalist Design
-DecisionIQ features a custom-built **Neo-Brutalist Design System** that provides a premium, high-impact enterprise visual experience.
-*   **Vibrant, curated color palettes** (no generic reds or blues) tailored per strategy type.
-*   **High-contrast offsets** and thick ink borders (`border-2 border-ink`, custom neomorphic box shadows).
-*   **Micro-animations and slide-up transitions** for responsive user interactions.
-*   **Pure CSS distribution charts** for light, lightning-fast rendering without loading bulky third-party chart libraries.
-
----
-
-## ✨ Key Features
-
-1.  **Dynamic Purchasing Priority Slider**
-    *   Interactively adjust the target trade-off: **Waste Minimization ↔ Profit Maximization** (0 to 100).
-    *   Watch three distinct strategy profiles—**Conservative**, **Aggressive**, and **AI Recommended**—re-rank and recalculate their suggested orders in real time.
-2.  **AI Explanation & Insights Panel**
-    *   Gemini models analyze stock levels, average weekly sales, weather sensitivity, and event flags to explain *exactly why* a strategy is recommended.
-    *   Outputs **Key Inventory Factors**, **Expected Business Impact**, and **Top Risks** (e.g. spoilage or lost sales).
-3.  **Data-Grounded Next Actions**
-    *   Generates 3 immediate, concrete action items mapping directly to identified inventory risks.
-4.  **Persistent Decision History Timeline**
-    *   Allows confirming and logging strategies locally to `localStorage` (no database writes required for history).
-    *   Displays a vertical history timeline with weather/event context badges.
-    *   **Detail Modals:** Click any history entry to open an overlay displaying the confirmed strategy metrics, weather/event tags, top ordered products, and the original AI explanation text.
-    *   **View All History:** Click "View All" to explore the full chronological list of confirmed actions.
-5.  **Interactive Inventory Management Dashboard**
-    *   Live connection status panel displaying current BigQuery tables and Vertex AI connectivity status.
-    *   Stat cards displaying high-level KPIs (Total Products, Units, Avg Weekly Sales, Value) and Health Alerts (Low Stock, High Spoilage Risk, Weather-Sensitive, Event-Sensitive).
-    *   Distribution charts summarizing inventory composition by category, stock level, and remaining shelf life.
-    *   Full inline CRUD (Create, Read, Update, Delete) interface executing live BigQuery queries.
+  <p>
+    <img src="https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" alt="React" />
+    <img src="https://img.shields.io/badge/FastAPI-109989?style=for-the-badge&logo=fastapi&logoColor=white" alt="FastAPI" />
+    <img src="https://img.shields.io/badge/Python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54" alt="Python" />
+    <img src="https://img.shields.io/badge/Google_Cloud-4285F4?style=for-the-badge&logo=google-cloud&logoColor=white" alt="Google Cloud" />
+    <img src="https://img.shields.io/badge/Google_BigQuery-669DF2?style=for-the-badge&logo=google&logoColor=white" alt="BigQuery" />
+    <img src="https://img.shields.io/badge/Vertex_AI_Gemini-4285F4?style=for-the-badge&logo=google&logoColor=white" alt="Vertex AI" />
+    <img src="https://img.shields.io/badge/Google_Cloud_Run-4285F4?style=for-the-badge&logo=google-cloud&logoColor=white" alt="Cloud Run" />
+    <img src="https://img.shields.io/badge/Firebase_Hosting-FFCA28?style=for-the-badge&logo=firebase&logoColor=black" alt="Firebase Hosting" />
+    <img src="https://img.shields.io/badge/Docker-0db7ed?style=for-the-badge&logo=docker&logoColor=white" alt="Docker" />
+  </p>
+  
+  <h4>An interactive AI decision intelligence platform that helps small grocery store owners simulate multiple inventory purchasing strategies, compare trade-offs, and place optimal orders.</h4>
+</div>
 
 ---
 
-## 🏗️ Technical Architecture
+## 🎯 Why DecisionIQ? (The Business Problem)
+
+### The Dilemma
+Small grocery store owners lose thousands of dollars each month due to two competing inventory errors:
+1.  **Spoilage and Waste:** Ordering too many perishable products (like fresh bakery, seafood, or vegetables) that expire before they can be sold.
+2.  **Stockouts and Lost Sales:** Under-ordering, resulting in empty shelves, missed revenue, and disappointed customers when demand peaks due to local events or sunny weather.
+
+### The Solution
+**DecisionIQ** bridges this gap. It is **not** a chatbot, a basic visual dashboard, or a standard time-series forecaster. It is an **interactive decision simulator**. 
+
+By moving a single **Purchasing Priority Slider (Waste ↔ Profit)**, owners can instantly evaluate three distinct purchasing strategies. Supported by Vertex AI Gemini, the platform dynamically analyzes live BigQuery stock levels, shelf-life constraints, weather forecasts, and local foot traffic events, transforming raw data into clear, explainable business decisions.
+
+---
+
+## 🚀 Project Highlights & Core Values
+*   🔗 **Live BigQuery Integration:** Operates directly on a real operational BigQuery dataset, supporting full, instantaneous inline DML CRUD operations.
+*   🧠 **Explainable AI (XAI):** Generates plain-English trade-off explanations detailing exactly *why* a purchasing strategy is recommended, tracing metrics back to live inventory parameters.
+*   📊 **Real-time Inventory Analytics:** Computes high-level KPIs, health alerts (e.g. spoilage risks, low stocks), and generates interactive category distribution charts.
+*   💡 **Grounded Next Actions:** Translates high-level strategy choices into 3 immediate, data-grounded execution steps.
+*   ☁️ **Cloud Native & Scalable:** Fully dockerized FastAPI backend running on Google Cloud Run with Application Default Credentials (ADC) and React frontend deployed to Firebase Hosting.
+
+---
+
+## 🖼️ Application Screenshots
+
+### 1. Main Decision Simulator Dashboard
+![Main Dashboard](images/Dashboard.png)
+
+### 2. Live Inventory Analytics & CRUD Console
+![Inventory Page](images/Inventory%20Page.png)
+
+### 3. AI Explanation & Next Action Panel
+![AI Explanation](images/AI%20Explanation.png)
+
+### 4. Live CRUD Edit & Status Console
+![Inventory Edit Page](images/Inventory%20Page-edit.png)
+
+---
+
+## 🔄 End-to-End Workflow Diagram
 
 ```
-                 +-----------------------------------+
-                 |      Frontend (React + Vite)      |
-                 |      Neo-Brutalist UI Theme       |
-                 +-----------------+-----------------+
-                                   |
-                                   | REST API (Axios)
-                                   v
-                 +-----------------+-----------------+
-                 |  Backend (FastAPI on Cloud Run)   |
-                 |  Dockerized Multi-Stage Container |
-                 +--------+-----------------+--------+
-                          |                 |
-                          | Read/Write DML  | Vertex AI SDK
-                          v                 v
-                 +--------+--------+ +------+--------+
-                 |  Google BigQuery| |  Vertex AI    |
-                 |  (Inventory DB) | | (Gemini 2.5)  |
-                 +-----------------+ +---------------+
++---------------+           +---------------+           +-----------------------+
+|  Store Owner  |           |   React App   |           |    FastAPI Backend    |
+|               |           |  (Vite + Tailwind)    |   |      (Cloud Run)      |
++-------+-------+           +-------+-------+           +-----------+-----------+
+        |                           |                               |
+        | 1. Slide Priority Slider  |                               |
+        +-------------------------->+                               |
+        |                           | 2. POST /generate-scenarios   |
+        |                           +------------------------------>+
+        |                           |                               | 3. Query Stock Stats
+        |                           |                               +-------------------+
+        |                           |                               |                   |
+        |                           |                               |<------------------+
+        |                           |                               | (Google BigQuery)
+        |                           |                               |
+        |                           |                               | 4. Process Context & Prompts
+        |                           |                               +-------------------+
+        |                           |                               |                   |
+        |                           |                               |<------------------+
+        |                           |                               | (Vertex AI Gemini)
+        |                           |                               |
+        |                           | 5. Return Strategies (JSON)   |
+        |                           |<------------------------------+
+        |                           |                               |
+        | 6. Render strategy cards  |                               |
+        |<--------------------------+                               |
+        |                           |                               |
+        | 7. Select & Confirm Card  |                               |
+        +-------------------------->+                               |
+        |                           | 8. Log confirmed action       |
+        |                           +------------------------------>+ (Save local / BQ)
+        v                           v                               v
 ```
 
-*   **Frontend**: React 18, Vite, Tailwind CSS, Axios, React Router.
-*   **Backend**: FastAPI, Uvicorn, Pydantic v2, Python-dotenv.
-*   **Google Cloud Native Integration**:
-    *   **Google BigQuery**: Serves as the primary operational datastore for inventory items. Includes live transaction updates (INSERT/UPDATE/DELETE).
-    *   **Vertex AI (Gemini 2.5 Flash)**: Generates ranked strategies and plain-English trade-off explanations.
-    *   **Google Cloud Run**: Hosts the containerized FastAPI backend with automatic scaling and dynamic port allocation.
-    *   **Application Default Credentials (ADC)**: The backend automatically uses the attached service account credentials on Google Cloud, avoiding the need for hardcoded local service keys in production.
+---
+
+## ⚙️ Key Feature Specifications
+
+| Feature | Description | Business Impact |
+|---|---|---|
+| **Purchasing Priority Slider** | Dynamic Waste Minimization (0) to Profit Maximization (100) slider. | Re-ranks and recalculates orders live based on risk appetite. |
+| **AI Scenario Comparison** | Live side-by-side card layouts for *Conservative*, *Aggressive*, and *AI Recommended* plans. | Enables store owners to visually compare order units, costs, and risks. |
+| **Explainable AI Panel** | Traces ordering suggestions back to inventory averages, shelf-life, and weather. | Eradicates black-box AI doubt, providing full logic transparency. |
+| **Grounded Next Actions** | Generates 3 immediate execution prompts under the strategy card. | Operationalizes raw metrics into concrete immediate tasks. |
+| **Decision History Drawer** | Chronological collapsible drawer saving confirmed decisions to `localStorage`. | Retains historical context for post-mortem analysis. |
+| **Decision Detail Modals** | Clicking a history entry opens a full overlay detailing weather, events, and AI summaries. | Allows reviewing and verifying original logic weeks after ordering. |
+| **Stat Cards & Live Health Alerts** | Alerts highlighting low stock, high spoilage, and sensitive items. | Surfaces silent inventory losses before they occur. |
+| **Inline BigQuery CRUD** | Add, edit, or delete items directly from the table console. | Supports instant, live operational stock updates. |
+
+---
+
+## 🏗️ Google Cloud Production Architecture
+
+```
+                       +---------------------------------------+
+                       |      Firebase Hosting CDN Nodes       |
+                       |       (React Client SPA Build)        |
+                       +-------------------+-------------------+
+                                           |
+                                           | HTTPS REST Requests (Axios)
+                                           v
+                       +-------------------+-------------------+
+                       |       Google Cloud Run Instance       |
+                       |       (FastAPI backend Container)     |
+                       +---------+-------------------+---------+
+                                 |                   |
+                                 | Read/Write DML    | Vertex AI SDK
+                                 v                   v
+                       +---------+---------+ +-------+---------+
+                       |  Google BigQuery  | |   Vertex AI     |
+                       |   (Inventory DB)  | | (Gemini 2.5 SDK)|
+                       +-------------------+ +-----------------+
+```
 
 ---
 
@@ -116,7 +186,7 @@ decisioniq/
 
 ## ⚙️ Environment Variables
 
-### Backend `.env` Variables
+### Backend Environment Configuration
 Create `backend/.env` based on `backend/.env.example`:
 ```env
 GOOGLE_CLOUD_PROJECT=your-gcp-project-id
@@ -137,7 +207,7 @@ ALLOW_ALL_ORIGINS=false
 LOG_LEVEL=INFO
 ```
 
-### Frontend `.env` Variables
+### Frontend Environment Configuration
 Create `frontend/.env` based on `frontend/.env.example`:
 ```env
 # Leave empty in development to automatically use the Vite proxy (/api -> localhost:8000)
@@ -237,6 +307,18 @@ gcloud run deploy decisioniq-backend \
 2. **Supplier APIs**: Automate purchase order submittals directly through supplier API catalogs.
 3. **Autonomous purchasing agents**: Authorize AI to make micro-purchases under strict cost caps.
 4. **Predictive demand forecasting**: Incorporate historical multi-year seasonal sales history.
+
+---
+
+## 👨‍💻 Developer & Team
+
+**Mithun Raj M R**
+*   **Role:** Software Engineer
+*   **Program:** Google Gen AI Academy APAC Hackathon (Cohort 2)
+*   **Portfolio:** [mithunrajmr.netlify.app](https://mithunrajmr.netlify.app/)
+*   **GitHub:** [github.com/mithunrajmr](https://github.com/mithunrajmr)
+*   **LinkedIn:** [linkedin.com/in/mithunrajmr](https://www.linkedin.com/in/mithunrajmr)
+*   **Email:** [mrmithunraj07@gmail.com](mailto:mrmithunraj07@gmail.com)
 
 ---
 
