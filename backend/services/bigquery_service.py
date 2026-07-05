@@ -215,6 +215,8 @@ class BigQueryService:
         Falls back to mock data if BigQuery is unavailable.
         """
         if self._use_mock:
+            logger.info("Serving inventory from mock fallback data.")
+            print("[DecisionIQ] Serving inventory from mock fallback data.")
             return MOCK_INVENTORY
 
         try:
@@ -234,9 +236,12 @@ class BigQueryService:
                 ORDER BY category, product_name
             """
             rows = list(client.query(query).result())
+            logger.info("Serving inventory from BigQuery table: %s.%s.%s", self.project_id, self.dataset, self.table)
+            print(f"[DecisionIQ] Serving inventory from BigQuery table: {self.project_id}.{self.dataset}.{self.table}")
             return [dict(row) for row in rows]
         except Exception as exc:
             logger.error("BigQuery query failed: %s – falling back to mock data.", exc)
+            print(f"[DecisionIQ] BigQuery query failed ({exc}) – falling back to mock data.")
             return MOCK_INVENTORY
 
 

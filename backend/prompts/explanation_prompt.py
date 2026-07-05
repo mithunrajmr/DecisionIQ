@@ -1,7 +1,6 @@
 """
-Explanation prompt for Gemini.
-Builds a prompt that returns a plain-English explanation of WHY a scenario is recommended,
-grounded entirely in the inventory data.
+Explanation prompt builder for Gemini.
+Generates structured JSON explanations and grounding suggestions.
 """
 import json
 from typing import List, Dict, Any
@@ -13,46 +12,57 @@ def build_explanation_prompt(
     priority: int,
 ) -> str:
     """
-    Constructs the Gemini prompt for explaining the chosen scenario.
-
-    Args:
-        inventory:     List of inventory row dicts from BigQuery.
-        scenario_name: Name of the scenario to explain.
-        priority:      0–100 slider value.
+    Constructs the Gemini prompt for structured explanation and suggested actions.
     """
     inventory_json = json.dumps(inventory, indent=2)
 
     bias_label = (
-        "waste reduction" if priority < 40
-        else "profit" if priority > 60
-        else "a balanced trade-off"
+        "waste reduction (prevent spoilage)" if priority < 40
+        else "profit maximization (prevent stockouts)" if priority > 60
+        else "a balanced compromise between profit and waste"
     )
 
-    prompt = f"""You are an AI advisor explaining inventory decisions to a small grocery store owner.
+    prompt = f"""You are an expert retail decision engine explaining inventory decisions.
 
 ## Task
-Explain in clear, friendly plain English WHY the "{scenario_name}" purchasing strategy
-is the best choice given the owner's current priority setting and inventory data.
+Analyze the provided inventory data and generate a structured decision intelligence analysis and exactly 3 suggested actions for the selected scenario "{scenario_name}" at priority setting {priority}/100.
 
-## Priority Setting
-{priority} / 100 — the owner is prioritising {bias_label}.
+Return ONLY a valid JSON object matching the schema below. Do not wrap in markdown or add notes.
 
-## Inventory Data
+## Input Context
+- Selected Strategy: {scenario_name}
+- Slider Priority: {priority} / 100 ({bias_label})
+- Inventory Data (BigQuery):
 {inventory_json}
 
-## Rules — STRICTLY ENFORCED
-1. Every number or statistic you mention MUST come directly from the inventory data above.
-2. Never invent percentages, dollar amounts, or quantities not present in the data.
-3. Reference specific column values: avg_weekly_sales_units, current_stock_units,
-   shelf_life_days, unit_cost, unit_price, weather_sensitivity, local_event_flag.
-4. Write for a non-technical reader — avoid jargon.
-5. Keep the response to 4–6 short paragraphs.
-6. Do NOT include JSON, bullet lists, or markdown headers — only flowing prose.
-7. Start by naming the strategy and connecting it to the owner's priority setting.
-8. Then walk through 2–3 specific products from the data to illustrate why the
-   quantities are right (cite shelf_life_days, avg_weekly_sales_units, etc.).
-9. Close with one sentence on the expected outcome.
+## Guidelines for Response Fields
+1. **why_this_strategy**
+   Explain the core business rationale of "{scenario_name}" relative to a priority of {priority}/100. Write 2-3 sentences.
+2. **key_inventory_factors**
+   Call out 2-3 specific products from the data. Discuss their current_stock_units, shelf_life_days, or avg_weekly_sales_units to justify the recommended order quantities. Keep numbers 100% accurate to the data.
+3. **business_impact**
+   State the forecast business outcome (e.g. cash flow efficiency, waste levels, or potential revenue captures).
+4. **risks**
+   State any risks associated with this specific strategy (e.g. stockouts if demand surges, or waste if short shelf-life items don't sell).
+5. **suggested_actions**
+   Provide exactly 3 concrete, data-grounded action items to execute tomorrow. Each item must contain:
+   - "action": What needs to be done.
+   - "product": The product name (or null if general). Must match a product name in the data exactly.
+   - "reason": A single, data-backed sentence explaining why (citing specific sales, stock, shelf-life, event, or weather numbers).
 
-Write the explanation now:
+## Response Schema (JSON ONLY)
+{{
+  "why_this_strategy": "string",
+  "key_inventory_factors": "string",
+  "business_impact": "string",
+  "risks": "string",
+  "suggested_actions": [
+    {{
+      "action": "string",
+      "product": "string or null",
+      "reason": "string"
+    }}
+  ]
+}}
 """
     return prompt

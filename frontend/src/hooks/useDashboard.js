@@ -5,7 +5,10 @@ const DEBOUNCE_MS = 600
 
 /**
  * useDashboard — manages all Dashboard state:
- *   inventory, context, priority slider, scenarios, explanation visibility.
+ *   priority slider, scenario fetching, scenario selection.
+ *
+ * Bug fix: selectedScenario is reset to null whenever the slider moves
+ * (new fetch invalidates the previous selection).
  */
 export function useDashboard(inventory, context) {
   const [priority, setPriority]         = useState(50)
@@ -21,7 +24,7 @@ export function useDashboard(inventory, context) {
     setError(null)
     try {
       const result = await generateScenarios(p)
-      // Sort by rank ascending so rank-1 is first
+      // Sort by rank ascending (rank 1 first)
       const sorted = [...(result.scenarios || [])].sort((a, b) => a.rank - b.rank)
       setScenarios(sorted)
     } catch (err) {
@@ -31,7 +34,7 @@ export function useDashboard(inventory, context) {
     }
   }, [])
 
-  // Initial load and whenever inventory/context are ready
+  // Fetch once inventory + context are ready
   useEffect(() => {
     if (inventory && context) {
       fetchScenarios(priority)
@@ -39,9 +42,10 @@ export function useDashboard(inventory, context) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [inventory, context])
 
-  // Debounced re-fetch on slider change
+  // Debounced re-fetch on slider change; ALSO clear selection (avoids stale state)
   const handlePriorityChange = useCallback((value) => {
     setPriority(value)
+    setSelected(null)   // ← fix: clear stale selection on every slider move
     if (debounceRef.current) clearTimeout(debounceRef.current)
     debounceRef.current = setTimeout(() => {
       fetchScenarios(value)

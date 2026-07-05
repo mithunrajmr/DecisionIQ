@@ -126,8 +126,11 @@ class DecisionService:
             prompt = build_scenario_prompt(inventory, priority)
             raw = gemini_service.generate(prompt)
             scenarios = validate_scenarios(raw.get("scenarios", raw))
+            logger.info("Serving scenarios from Gemini API.")
+            print("[DecisionIQ] Serving scenarios from Gemini API.")
         except Exception as exc:
             logger.warning("Gemini unavailable (%s) – using rule-based fallback.", exc)
+            print(f"[DecisionIQ] Gemini scenarios failed ({exc}). Serving from rule-based fallback.")
             scenarios = _rule_based_scenarios(inventory, priority)
 
         return {

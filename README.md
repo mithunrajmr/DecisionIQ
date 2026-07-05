@@ -8,9 +8,13 @@ It is **not** a chatbot, a dashboard, or a forecasting tool — it is a **decisi
 
 ---
 
-## ✨ The Wow Moment
+## ✨ Key Features & The Wow Moment
 
-Move the **Profit ↔ Waste Reduction** slider and watch three AI-generated strategies re-rank live. Click into Gemini's explanation to see exactly *why* the recommended strategy is best — every number traced back to your BigQuery inventory data.
+1. **Purchasing Priority Slider** — Move the **Profit ↔ Waste Reduction** slider and watch three AI-generated strategies re-rank live.
+2. **AI Explanation Panel** — Click into Gemini's explanation to see exactly *why* the recommended strategy is best — every number traced back to your BigQuery inventory data.
+3. **AI Suggested Next Actions** — Displays 3 data-grounded immediate action items under the explanation to guide the store owner.
+4. **Decision History Drawer** — Collapsible panel saving the last **5 confirmed decisions** to `localStorage`, displaying a history timeline of confirmed strategies.
+5. **Modern Neo-Brutalist UI** — Clean, premium enterprise Neo-Brutalist interface with strong borders, offsets, and harmonised status badges.
 
 ---
 
@@ -39,10 +43,10 @@ Backend (FastAPI on Cloud Run)
 decisioniq/
 ├── frontend/               # React + Vite + Tailwind CSS
 │   ├── src/
-│   │   ├── components/     # Header, Footer, Cards, Slider, Panel, Skeletons
+│   │   ├── components/     # Header, Footer, Cards, Slider, Panel, Skeletons, DecisionHistory, ActionSuggestions
 │   │   ├── pages/          # Dashboard, About
 │   │   ├── services/       # inventoryApi, contextApi, decisionApi, explanationApi
-│   │   └── hooks/          # useFetch, useDashboard
+│   │   └── hooks/          # useFetch, useDashboard, useDecisionHistory
 │   └── package.json
 │
 ├── backend/                # FastAPI
@@ -103,72 +107,38 @@ uvicorn main:app --reload --port 8000
 cd frontend
 npm install
 npm run dev
-# Open http://localhost:5173
 ```
 
----
-
-## 🌐 REST API
-
-| Method | Endpoint              | Description                              |
-|--------|-----------------------|------------------------------------------|
-| GET    | `/health`             | Liveness probe                           |
-| GET    | `/inventory`          | Inventory summary from BigQuery          |
-| GET    | `/context`            | Tomorrow's weather + local event         |
-| POST   | `/generate-scenarios` | 3 ranked strategies `{ priority: 0–100 }`|
-| POST   | `/explanation`        | Gemini explanation `{ scenario, priority }`|
+The app will start on [http://localhost:5173](http://localhost:5173). The API is proxy-configured via Vite to route to `localhost:8000/api`.
 
 ---
 
-## ☁️ Cloud Run Deployment
+## ☁️ Production Deployment (Cloud Run)
 
+The project includes a multi-stage `Dockerfile` optimised for Cloud Run.
+
+### 1. Build and push image
 ```bash
-# Build and push
-gcloud builds submit --tag gcr.io/YOUR_PROJECT/decisioniq-backend
+gcloud builds submit --tag gcr.io/YOUR_PROJECT_ID/decisioniq-backend
+```
 
-# Deploy
+### 2. Deploy backend to Cloud Run
+```bash
 gcloud run deploy decisioniq-backend \
-  --image gcr.io/YOUR_PROJECT/decisioniq-backend \
+  --image gcr.io/YOUR_PROJECT_ID/decisioniq-backend \
   --platform managed \
   --region us-central1 \
   --allow-unauthenticated \
-  --set-env-vars GOOGLE_CLOUD_PROJECT=YOUR_PROJECT,VERTEX_LOCATION=us-central1
+  --set-env-vars GOOGLE_CLOUD_PROJECT=YOUR_PROJECT_ID,VERTEX_LOCATION=us-central1,ALLOW_ALL_ORIGINS=true
 ```
 
----
-
-## 🔒 Data Transparency
-
-Every number Gemini cites in its explanation traces directly to a column in the BigQuery `inventory_data` table. No figures are invented or assumed by the AI.
-
----
-
-## 📋 BigQuery Schema
-
-| Column                   | Type    | Description                      |
-|--------------------------|---------|----------------------------------|
-| `product_name`           | STRING  | Product display name             |
-| `category`               | STRING  | Product category                 |
-| `avg_weekly_sales_units` | INTEGER | Average units sold per week      |
-| `current_stock_units`    | INTEGER | Current on-hand inventory        |
-| `shelf_life_days`        | INTEGER | Days before expiry               |
-| `unit_cost`              | FLOAT   | Cost price per unit              |
-| `unit_price`             | FLOAT   | Retail price per unit            |
-| `weather_sensitivity`    | STRING  | `high` or `low`                  |
-| `local_event_flag`       | BOOLEAN | Event happening tomorrow?        |
-
----
-
-## 🛠️ Tech Stack
-
-| Layer       | Technology                          |
-|-------------|-------------------------------------|
-| Frontend    | React 18 · Vite · Tailwind CSS · React Router · Axios |
-| Backend     | FastAPI · Pydantic v2 · Python 3.11 |
-| AI          | Vertex AI · Gemini 2.5 Flash        |
-| Data        | Google BigQuery                     |
-| Deployment  | Cloud Run · Docker                  |
-
----
-
-*Built for the Google Gen AI Academy APAC Hackathon 2025.*
+### 3. Deploy frontend
+Set the `VITE_API_URL` inside your frontend `.env` to point to the newly generated Cloud Run service URL:
+```env
+VITE_API_URL=https://decisioniq-backend-xxxxxx.run.app
+```
+Build the production build:
+```bash
+npm run build
+```
+The static files in `dist/` can be hosted using Firebase Hosting, Cloud Storage, or any static provider.

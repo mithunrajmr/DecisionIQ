@@ -1,45 +1,49 @@
 /**
  * StrategyCard – displays one purchasing scenario.
- * Animates on rank change via CSS transition.
+ * onConfirm is called when the user confirms (saves to history).
  */
 
 const CARD_CONFIG = {
   'Conservative': {
-    icon: '🛡️',
-    accent: 'border-blue-200 bg-gradient-to-br from-white to-blue-50',
-    rankColor: 'bg-blue-600 text-white',
-    scoreColor: 'bg-blue-100 text-blue-700',
-    badgeColor: 'bg-blue-50 text-blue-600 border-blue-100',
-    scoreBar: 'bg-blue-500',
+    icon:      '🛡️',
+    accentBg:  '#dbeafe',
+    accentBorder: '#2563eb',
+    scoreColor: '#1d4ed8',
+    barColor:  '#2563eb',
+    rankBg:    '#0a0a0a',
+    rankText:  '#ffffff',
   },
   'Aggressive': {
-    icon: '🚀',
-    accent: 'border-orange-200 bg-gradient-to-br from-white to-orange-50',
-    rankColor: 'bg-orange-500 text-white',
-    scoreColor: 'bg-orange-100 text-orange-700',
-    badgeColor: 'bg-orange-50 text-orange-600 border-orange-100',
-    scoreBar: 'bg-orange-400',
+    icon:      '🚀',
+    accentBg:  '#ffedd5',
+    accentBorder: '#ea580c',
+    scoreColor: '#c2410c',
+    barColor:  '#f97316',
+    rankBg:    '#ea580c',
+    rankText:  '#ffffff',
   },
   'AI Recommended': {
-    icon: '✨',
-    accent: 'border-brand-200 bg-gradient-to-br from-white to-brand-50',
-    rankColor: 'bg-brand-600 text-white',
-    scoreColor: 'bg-brand-100 text-brand-700',
-    badgeColor: 'bg-brand-50 text-brand-700 border-brand-100',
-    scoreBar: 'bg-brand-500',
+    icon:      '✨',
+    accentBg:  '#dcfce7',
+    accentBorder: '#16a34a',
+    scoreColor: '#15803d',
+    barColor:  '#22c55e',
+    rankBg:    '#2563eb',
+    rankText:  '#ffffff',
   },
 }
 
 const DEFAULT_CFG = {
   icon: '📋',
-  accent: 'border-slate-200 bg-white',
-  rankColor: 'bg-slate-400 text-white',
-  scoreColor: 'bg-slate-100 text-slate-600',
-  badgeColor: 'bg-slate-50 text-slate-600 border-slate-200',
-  scoreBar: 'bg-slate-400',
+  accentBg: '#f5f5f4',
+  accentBorder: '#a8a29e',
+  scoreColor: '#57534e',
+  barColor: '#a8a29e',
+  rankBg: '#0a0a0a',
+  rankText: '#ffffff',
 }
 
-export default function StrategyCard({ scenario, isSelected, onSelect }) {
+export default function StrategyCard({ scenario, isSelected, onSelect, onConfirm, priority = 50 }) {
   if (!scenario) return null
 
   const cfg = CARD_CONFIG[scenario.name] ?? DEFAULT_CFG
@@ -49,13 +53,44 @@ export default function StrategyCard({ scenario, isSelected, onSelect }) {
     .sort(([, a], [, b]) => b - a)
     .slice(0, 4)
 
+  const handleConfirm = (e) => {
+    e.stopPropagation()
+    if (onConfirm) onConfirm(scenario)
+  }
+
+  // Dynamic explanation of ranking compared to other strategies
+  const getRankingReason = (name, rank, p) => {
+    if (rank === 1) {
+      if (p < 40) return "🏆 Ranked #1: Strongest protection against inventory waste & spoilage."
+      if (p > 60) return "🏆 Ranked #1: Maximizes revenue capture for weather & event demand."
+      return "🏆 Ranked #1: Optimal balanced trade-off between profit & waste."
+    }
+    if (name === 'Conservative') {
+      return `Ranked #${rank}: Safer from spoilage but risks stockouts on high-demand lines.`
+    }
+    if (name === 'Aggressive') {
+      return `Ranked #${rank}: Higher revenue upside but carries high shelf-life risk.`
+    }
+    return `Ranked #${rank}: Balanced alternative configuration.`
+  }
+
+  // Fit metric based on score range
+  const fitMetric = scenario.score >= 80 ? 'Optimal' : scenario.score >= 65 ? 'High' : 'Moderate'
+  const fitColor = scenario.score >= 80 ? '#15803d' : scenario.score >= 65 ? '#1d4ed8' : '#78716c'
+
   return (
     <div
-      className={`scenario-card card border-2 cursor-pointer
-        ${cfg.accent}
-        ${isSelected ? 'ring-2 ring-brand-400 ring-offset-2 shadow-card-hover -translate-y-1' : 'hover:shadow-card-hover hover:-translate-y-0.5'}
-        ${isRecommended ? 'relative' : ''}
-      `}
+      className="scenario-card cursor-pointer"
+      style={{
+        background: '#ffffff',
+        border: isSelected ? `2px solid ${cfg.accentBorder}` : '2px solid #0a0a0a',
+        borderRadius: '14px',
+        boxShadow: isSelected
+          ? `4px 4px 0 0 ${cfg.accentBorder}`
+          : '3px 3px 0 0 #0a0a0a',
+        transform: isSelected ? 'translate(-1px, -1px)' : undefined,
+        position: 'relative',
+      }}
       onClick={() => onSelect(scenario.name)}
       role="button"
       tabIndex={0}
@@ -63,11 +98,12 @@ export default function StrategyCard({ scenario, isSelected, onSelect }) {
       aria-pressed={isSelected}
       aria-label={`${scenario.name} strategy, rank ${scenario.rank}`}
     >
-      {/* "Best Match" ribbon for AI Recommended when rank 1 */}
+      {/* Best match ribbon */}
       {isRecommended && scenario.rank === 1 && (
-        <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
-          <span className="bg-brand-600 text-white text-xs font-bold px-3 py-1
-                           rounded-full shadow-md whitespace-nowrap">
+        <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-10">
+          <span className="text-xs font-black uppercase tracking-wider px-3 py-1
+                           rounded-full border-2 border-ink whitespace-nowrap"
+                style={{ background: '#fef3c7', color: '#0a0a0a', boxShadow: '2px 2px 0 0 #0a0a0a' }}>
             ✨ Best Match
           </span>
         </div>
@@ -76,60 +112,79 @@ export default function StrategyCard({ scenario, isSelected, onSelect }) {
       <div className="p-5">
         {/* Header row */}
         <div className="flex items-start justify-between mb-4 mt-1">
-          <div className="flex items-center gap-2">
-            <span className="text-2xl leading-none">{cfg.icon}</span>
+          <div className="flex items-center gap-2.5">
+            {/* Rank badge */}
+            <div className="rank-badge"
+                 style={{ background: cfg.rankBg, color: cfg.rankText, borderColor: '#0a0a0a' }}>
+              {scenario.rank}
+            </div>
             <div>
-              <h3 className="font-bold text-slate-800 leading-tight">{scenario.name}</h3>
-              <div className={`badge mt-1 border ${cfg.badgeColor}`}>
-                Rank #{scenario.rank}
-              </div>
+              <h3 className="font-black text-ink text-base leading-tight">{scenario.name}</h3>
+              <span className="text-xs font-bold text-stone-400 uppercase tracking-wide">
+                Strategy
+              </span>
             </div>
           </div>
-          {/* Score circle */}
-          <div className={`w-12 h-12 rounded-xl flex flex-col items-center justify-center ${cfg.scoreColor}`}>
-            <span className="text-lg font-black leading-none">
+
+          {/* Score & Fit */}
+          <div className="flex flex-col items-center justify-center w-14 h-14 rounded-xl border-2 border-ink"
+               style={{ background: cfg.accentBg, boxShadow: '2px 2px 0 0 #0a0a0a' }}>
+            <span className="text-xl font-black leading-none" style={{ color: cfg.scoreColor }}>
               {Math.round(scenario.score)}
             </span>
-            <span className="text-xs font-medium opacity-70">score</span>
+            <span className="text-[9px] font-black uppercase tracking-wide mt-0.5 leading-none"
+                  style={{ color: fitColor }}>
+              {fitMetric}
+            </span>
           </div>
         </div>
 
+        {/* Dynamic Rank Explanation */}
+        <p className="text-xs font-bold text-stone-600 mb-4 bg-stone-50 border border-stone-200 p-2 rounded-lg">
+          {getRankingReason(scenario.name, scenario.rank, priority)}
+        </p>
+
         {/* Score bar */}
         <div className="mb-4">
-          <div className="flex justify-between text-xs text-slate-400 mb-1">
-            <span>Priority fit</span>
+          <div className="flex justify-between text-xs font-bold text-stone-400 mb-1.5">
+            <span className="uppercase tracking-wide">Priority Fit</span>
             <span>{Math.round(scenario.score)}%</span>
           </div>
-          <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+          <div className="h-2.5 bg-stone-100 rounded-full overflow-hidden border border-stone-200">
             <div
-              className={`h-full rounded-full transition-all duration-700 ${cfg.scoreBar}`}
-              style={{ width: `${scenario.score}%` }}
+              className="h-full rounded-full transition-all duration-700"
+              style={{ width: `${scenario.score}%`, background: cfg.barColor }}
             />
           </div>
         </div>
 
-        {/* Profit / Waste stats */}
+        {/* Profit / Waste */}
         <div className="grid grid-cols-2 gap-2 mb-4">
-          <div className="p-3 rounded-xl bg-white border border-slate-100">
-            <p className="text-xs text-slate-400 mb-1 font-medium">Est. Profit</p>
-            <p className="text-sm font-bold text-accent-700">{scenario.estimated_profit}</p>
+          <div className="p-3 rounded-xl border-2 border-stone-100 bg-stone-50">
+            <p className="text-xs font-black text-stone-400 uppercase tracking-wide mb-1">Est. Profit</p>
+            <p className="text-sm font-black" style={{ color: '#15803d' }}>
+              {scenario.estimated_profit}
+            </p>
           </div>
-          <div className="p-3 rounded-xl bg-white border border-slate-100">
-            <p className="text-xs text-slate-400 mb-1 font-medium">Est. Waste</p>
-            <p className="text-sm font-bold text-orange-600">{scenario.estimated_waste}</p>
+          <div className="p-3 rounded-xl border-2 border-stone-100 bg-stone-50">
+            <p className="text-xs font-black text-stone-400 uppercase tracking-wide mb-1">Est. Waste</p>
+            <p className="text-sm font-black" style={{ color: '#c2410c' }}>
+              {scenario.estimated_waste}
+            </p>
           </div>
         </div>
 
         {/* Top order items */}
         {topOrder.length > 0 && (
           <div className="mb-4">
-            <p className="text-xs font-semibold text-slate-500 mb-2">Suggested Order (top items)</p>
-            <div className="space-y-1">
+            <p className="section-heading">Suggested Order</p>
+            <div className="space-y-1.5">
               {topOrder.map(([name, qty]) => (
-                <div key={name} className="flex justify-between items-center
-                                           text-xs bg-white border border-slate-100 rounded-lg px-2.5 py-1.5">
-                  <span className="text-slate-600 truncate pr-2">{name}</span>
-                  <span className="font-bold text-slate-800 flex-shrink-0">{qty} units</span>
+                <div key={name}
+                     className="flex justify-between items-center text-xs
+                                bg-white border-2 border-stone-100 rounded-lg px-3 py-1.5">
+                  <span className="text-stone-600 truncate pr-2 font-medium">{name}</span>
+                  <span className="font-black text-ink flex-shrink-0">{qty} units</span>
                 </div>
               ))}
             </div>
@@ -138,11 +193,11 @@ export default function StrategyCard({ scenario, isSelected, onSelect }) {
 
         {/* Benefits */}
         <div className="mb-3">
-          <p className="text-xs font-semibold text-slate-500 mb-1.5">Benefits</p>
-          <ul className="space-y-1">
+          <p className="section-heading">Benefits</p>
+          <ul className="space-y-1.5">
             {(scenario.benefits || []).slice(0, 3).map((b, i) => (
-              <li key={i} className="flex items-start gap-1.5 text-xs text-slate-600">
-                <span className="text-accent-500 mt-0.5 flex-shrink-0">✓</span>
+              <li key={i} className="flex items-start gap-2 text-xs text-stone-600">
+                <span className="font-black mt-0.5 flex-shrink-0" style={{ color: '#16a34a' }}>✓</span>
                 {b}
               </li>
             ))}
@@ -150,29 +205,45 @@ export default function StrategyCard({ scenario, isSelected, onSelect }) {
         </div>
 
         {/* Risks */}
-        <div>
-          <p className="text-xs font-semibold text-slate-500 mb-1.5">Risks</p>
-          <ul className="space-y-1">
+        <div className="mb-4">
+          <p className="section-heading">Risks</p>
+          <ul className="space-y-1.5">
             {(scenario.risks || []).slice(0, 2).map((r, i) => (
-              <li key={i} className="flex items-start gap-1.5 text-xs text-slate-500">
-                <span className="text-orange-400 mt-0.5 flex-shrink-0">⚠</span>
+              <li key={i} className="flex items-start gap-2 text-xs text-stone-500">
+                <span className="font-black mt-0.5 flex-shrink-0" style={{ color: '#ea580c' }}>⚠</span>
                 {r}
               </li>
             ))}
           </ul>
         </div>
 
-        {/* Select button */}
-        <button
-          className={`mt-4 w-full py-2 rounded-xl text-sm font-semibold transition-all duration-200
-            ${isSelected
-              ? 'bg-brand-600 text-white shadow-md'
-              : 'bg-slate-100 text-slate-600 hover:bg-brand-50 hover:text-brand-700'
-            }`}
-          onClick={(e) => { e.stopPropagation(); onSelect(scenario.name) }}
-        >
-          {isSelected ? '✓ Strategy Selected' : 'Select This Strategy'}
-        </button>
+        {/* Action buttons */}
+        <div className="flex gap-2 mt-2">
+          {/* Select/deselect */}
+          <button
+            className="flex-1 py-2.5 rounded-xl text-sm font-black transition-all duration-150 border-2"
+            style={isSelected
+              ? { background: '#0a0a0a', color: '#fff', borderColor: '#0a0a0a', boxShadow: '2px 2px 0 0 #0a0a0a' }
+              : { background: '#fff', color: '#0a0a0a', borderColor: '#0a0a0a', boxShadow: '2px 2px 0 0 #0a0a0a' }
+            }
+            onClick={(e) => { e.stopPropagation(); onSelect(scenario.name) }}
+          >
+            {isSelected ? '✓ Selected' : 'Select Strategy'}
+          </button>
+
+          {/* Confirm → saves to history */}
+          {isSelected && (
+            <button
+              className="px-4 py-2.5 rounded-xl text-sm font-black border-2 transition-all duration-150"
+              style={{ background: cfg.accentBg, color: cfg.scoreColor, borderColor: cfg.accentBorder,
+                       boxShadow: `2px 2px 0 0 ${cfg.accentBorder}` }}
+              onClick={handleConfirm}
+              title="Save this decision to history"
+            >
+              Confirm
+            </button>
+          )}
+        </div>
       </div>
     </div>
   )
