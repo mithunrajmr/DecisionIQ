@@ -2,22 +2,42 @@
 __pycache__/
 *.pyc
 .venv/
+venv/
+ENV/
 
 # Node
 node_modules/
+dist/
+build/
 
 # Environment
 .env
-.env.*
+.env.local
+.env.development
+.env.production
+.env.local.example
 
-# Credentials
-backend/credentials/
-*.json
-
-# Build
-dist/
-build/
+# IDE
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
 
 # OS
 .DS_Store
 Thumbs.db
+ehthumbs.db
+
+# Logs
+*.log
+uvicorn.log
+
+# Google credentials
+*.json
+!*.example.json
+!*example*.json
+!*template*.json
+backend/credentials/*.json
